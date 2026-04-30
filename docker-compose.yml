@@ -45,6 +45,16 @@ services:
     ports:
       - "1883:1883"
 
+  chirpstack-gateway-bridge-cn470-0:
+    image: chirpstack/chirpstack-gateway-bridge:4
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./chirpstack-gateway-bridge:/etc/chirpstack-gateway-bridge:ro
+    ports:
+      - "1700:1700/udp"
+    command: ["-c", "/etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml"]
+
   rabbitmq:
     image: rabbitmq:4-management-alpine
     ports:
