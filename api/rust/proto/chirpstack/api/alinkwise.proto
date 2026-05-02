@@ -25,7 +25,22 @@ service AlinkwiseService {
       get : "/api/alinkwise/tenant-devices"
     };
   }
+
+  // ClearGatewayFrameLog clears the cached Redis frame log for one gateway.
+  rpc ClearGatewayFrameLog(ClearGatewayFrameLogRequest)
+      returns (ClearGatewayFrameLogResponse) {
+    option (google.api.http) = {
+      delete : "/api/alinkwise/gateways/{gateway_id}/frame-log"
+    };
+  }
 }
+
+message ClearGatewayFrameLogRequest {
+  // Gateway ID (EUI64).
+  string gateway_id = 1;
+}
+
+message ClearGatewayFrameLogResponse {}
 
 message ListTenantDevicesRequest {
   // Max number of devices to return in the result-set.

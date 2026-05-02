@@ -11,6 +11,8 @@ use crate::alinkwise::device_query;
 use crate::api::auth::validator;
 use crate::api::error::ToStatus;
 use crate::api::helpers::{ToProto, datetime_to_prost_timestamp};
+use crate::storage::{get_async_redis_conn, redis_key};
+use lrwn::EUI64;
 
 pub struct Alinkwise {
     validator: validator::RequestValidator,
@@ -24,6 +26,34 @@ impl Alinkwise {
 
 #[async_trait]
 impl AlinkwiseService for Alinkwise {
+    async fn clear_gateway_frame_log(
+        &self,
+        request: Request<api::ClearGatewayFrameLogRequest>,
+    ) -> Result<Response<api::ClearGatewayFrameLogResponse>, Status> {
+        let req = request.get_ref();
+        let gateway_id = EUI64::from_str(&req.gateway_id).map_err(|e| e.status())?;
+
+        self.validator
+            .validate(
+                request.extensions(),
+                validator::ValidateGatewayAccess::new(validator::Flag::Delete, gateway_id),
+            )
+            .await?;
+
+        let key = redis_key(format!("gw:{{{}}}:stream:frame", req.gateway_id));
+        let mut redis_conn = get_async_redis_conn()
+            .await
+            .map_err(|e| Status::internal(format!("{:#}", e)))?;
+
+        () = redis::cmd("DEL")
+            .arg(key)
+            .query_async(&mut redis_conn)
+            .await
+            .map_err(|e| Status::internal(format!("{:#}", e)))?;
+
+        Ok(Response::new(api::ClearGatewayFrameLogResponse {}))
+    }
+
     async fn list_tenant_devices(
         &self,
         request: Request<api::ListTenantDevicesRequest>,

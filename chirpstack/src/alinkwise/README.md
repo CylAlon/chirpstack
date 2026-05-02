@@ -8,6 +8,7 @@
 - 提供租户维度的终端列表查询，避免前端为了展示“终端管理”而循环查询每个 Application。
 - 支持服务端分页、搜索、状态过滤、应用过滤、设备配置过滤、标签过滤和排序。
 - 返回终端所属应用、设备配置、最后在线时间、运行状态、电量/信号状态、JoinEUI、Class 等列表展示字段。
+- 新增 `AlinkwiseService.ClearGatewayFrameLog`，用于清除单个网关 Redis 实时帧缓存 `gw:{gateway_id}:stream:frame`。
 
 ## 主要文件
 
@@ -55,4 +56,3 @@
 3. 确认 `api/proto/api/alinkwise.proto` 和 `api/rust/proto/chirpstack/api/alinkwise.proto` 仍然一致。
 4. 运行 `cargo check -p chirpstack` 确认 Rust 服务仍可编译。
 5. 如前端需要调用新 proto，进入 `chirpstack/api/grpc-web` 运行 `make api` 重新生成本地 grpc-web 文件。
-
