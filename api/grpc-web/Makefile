@@ -29,6 +29,7 @@ api:
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/multicast_group.proto
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/relay.proto
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/fuota.proto
+	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/alinkwise.proto
 
 integration:
 	mkdir -p integration

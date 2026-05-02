@@ -7,6 +7,7 @@ use std::{
 };
 
 use anyhow::{Context as AnyhowContext, Result};
+use chirpstack_api::api::alinkwise_service_server::AlinkwiseServiceServer;
 use axum::{Router, response::IntoResponse, routing::get};
 use chirpstack_api::api::application_service_server::ApplicationServiceServer;
 use chirpstack_api::api::device_profile_service_server::DeviceProfileServiceServer;
@@ -42,6 +43,7 @@ use tracing::{error, info};
 use super::config;
 use crate::api::auth::validator;
 use crate::helpers::errors::PrintFullError;
+use crate::alinkwise;
 use crate::monitoring::prometheus;
 use crate::stream;
 
@@ -168,6 +170,10 @@ pub async fn setup() -> Result<()> {
         ))
         .add_service(FuotaServiceServer::with_interceptor(
             fuota::Fuota::new(validator::RequestValidator::new()),
+            auth::auth_interceptor,
+        ))
+        .add_service(AlinkwiseServiceServer::with_interceptor(
+            alinkwise::api::Alinkwise::new(validator::RequestValidator::new()),
             auth::auth_interceptor,
         ));
 

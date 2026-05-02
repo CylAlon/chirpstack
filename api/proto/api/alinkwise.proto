@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "github.com/chirpstack/chirpstack/api/go/v4/api";
+option java_package = "io.chirpstack.api";
+option java_multiple_files = true;
+option java_outer_classname = "AlinkwiseProto";
+option csharp_namespace = "Chirpstack.Api";
+option php_namespace = "Chirpstack\\Api";
+option php_metadata_namespace = "GPBMetadata\\Chirpstack\\Api";
+
+import "api/device.proto";
+import "common/common.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// AlinkwiseService contains Alinkwise-specific extension APIs.
+service AlinkwiseService {
+  // ListTenantDevices returns a tenant-level device list with server-side
+  // filtering, sorting, and pagination.
+  rpc ListTenantDevices(ListTenantDevicesRequest)
+      returns (ListTenantDevicesResponse) {
+    option (google.api.http) = {
+      get : "/api/alinkwise/tenant-devices"
+    };
+  }
+}
+
+message ListTenantDevicesRequest {
+  // Max number of devices to return in the result-set.
+  uint32 limit = 1;
+
+  // Offset in the result-set.
+  uint32 offset = 2;
+
+  // Tenant ID (UUID) to filter devices on.
+  string tenant_id = 3;
+
+  // Optional application ID (UUID).
+  string application_id = 4;
+
+  // Optional device-profile ID (UUID).
+  string device_profile_id = 5;
+
+  // Optional search over device, application, and device-profile name.
+  string search = 6;
+
+  enum OnlineState {
+    ALL = 0;
+    ONLINE = 1;
+    OFFLINE = 2;
+    NEVER_SEEN = 3;
+    DISABLED = 4;
+  }
+
+  // Optional online-state filter.
+  OnlineState online_state = 7;
+
+  enum OrderBy {
+    NAME = 0;
+    DEV_EUI = 1;
+    LAST_SEEN_AT = 2;
+    DEVICE_PROFILE_NAME = 3;
+    APPLICATION_NAME = 4;
+    CREATED_AT = 5;
+    UPDATED_AT = 6;
+  }
+
+  // Sorting field.
+  OrderBy order_by = 8;
+
+  // Sorting direction.
+  bool order_by_desc = 9;
+
+  // Tags to filter devices on.
+  map<string, string> tags = 10;
+}
+
+message TenantDeviceListItem {
+  string dev_eui = 1;
+  string name = 2;
+  string description = 3;
+  string application_id = 4;
+  string application_name = 5;
+  string device_profile_id = 6;
+  string device_profile_name = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  google.protobuf.Timestamp last_seen_at = 10;
+  DeviceStatus device_status = 11;
+  map<string, string> tags = 12;
+  string join_eui = 13;
+  bool is_disabled = 14;
+  bool is_active = 15;
+  common.DeviceClass class_enabled = 16;
+}
+
+message ListTenantDevicesResponse {
+  uint32 total_count = 1;
+  repeated TenantDeviceListItem result = 2;
+}
