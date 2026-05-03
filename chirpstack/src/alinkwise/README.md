@@ -39,6 +39,8 @@
   - 把 `alinkwise.proto` 加入 Rust proto 生成列表。
 - `api/grpc-web/Makefile`
   - 把 `alinkwise.proto` 加入前端 grpc-web 生成列表。
+- `chirpstack/src/downlink/multicast.rs`
+  - 组播下行 payload 长度校验固定使用 `RP002_1_0_0` 区域参数表，避免 CN470 在 `Latest` 下 DR0 被判定为 0 字节而丢弃组播队列。
 
 ## 前端接入
 

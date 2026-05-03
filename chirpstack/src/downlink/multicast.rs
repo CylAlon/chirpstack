@@ -125,7 +125,7 @@ impl Multicast {
 
         let max_pl_size = region_conf.get_max_dl_payload_size(
             lrwn::region::MacVersion::Latest,
-            lrwn::region::Revision::Latest,
+            lrwn::region::Revision::RP002_1_0_0,
             mg.dr as u8,
         )?;
 
