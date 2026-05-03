@@ -9,6 +9,8 @@
 - 支持服务端分页、搜索、状态过滤、应用过滤、设备配置过滤、标签过滤和排序。
 - 返回终端所属应用、设备配置、最后在线时间、运行状态、电量/信号状态、JoinEUI、Class 等列表展示字段。
 - 新增 `AlinkwiseService.ClearGatewayFrameLog`，用于清除单个网关 Redis 实时帧缓存 `gw:{gateway_id}:stream:frame`。
+- 新增 `AlinkwiseService.ClearDeviceFrameLog`，用于清除单个终端 Redis 实时帧缓存 `device:{dev_eui}:stream:frame`。
+- 新增 `AlinkwiseService.ClearDeviceMetrics`，用于清除单个终端 Redis 指标缓存 `metrics:{device:{dev_eui}}*`。
 
 ## 主要文件
 

@@ -54,6 +54,54 @@ impl AlinkwiseService for Alinkwise {
         Ok(Response::new(api::ClearGatewayFrameLogResponse {}))
     }
 
+    async fn clear_device_frame_log(
+        &self,
+        request: Request<api::ClearDeviceFrameLogRequest>,
+    ) -> Result<Response<api::ClearDeviceFrameLogResponse>, Status> {
+        let req = request.get_ref();
+        let dev_eui = EUI64::from_str(&req.dev_eui).map_err(|e| e.status())?;
+
+        self.validator
+            .validate(
+                request.extensions(),
+                validator::ValidateDeviceAccess::new(validator::Flag::Delete, dev_eui),
+            )
+            .await?;
+
+        let key = redis_key(format!("device:{{{}}}:stream:frame", dev_eui));
+        let mut redis_conn = get_async_redis_conn()
+            .await
+            .map_err(|e| Status::internal(format!("{:#}", e)))?;
+
+        () = redis::cmd("DEL")
+            .arg(key)
+            .query_async(&mut redis_conn)
+            .await
+            .map_err(|e| Status::internal(format!("{:#}", e)))?;
+
+        Ok(Response::new(api::ClearDeviceFrameLogResponse {}))
+    }
+
+    async fn clear_device_metrics(
+        &self,
+        request: Request<api::ClearDeviceMetricsRequest>,
+    ) -> Result<Response<api::ClearDeviceMetricsResponse>, Status> {
+        let req = request.get_ref();
+        let dev_eui = EUI64::from_str(&req.dev_eui).map_err(|e| e.status())?;
+
+        self.validator
+            .validate(
+                request.extensions(),
+                validator::ValidateDeviceAccess::new(validator::Flag::Delete, dev_eui),
+            )
+            .await?;
+
+        let pattern = redis_key(format!("metrics:{{device:{}}}*", dev_eui));
+        delete_redis_keys_by_pattern(pattern).await?;
+
+        Ok(Response::new(api::ClearDeviceMetricsResponse {}))
+    }
+
     async fn list_tenant_devices(
         &self,
         request: Request<api::ListTenantDevicesRequest>,
@@ -103,6 +151,40 @@ impl AlinkwiseService for Alinkwise {
 
         Ok(resp)
     }
+}
+
+async fn delete_redis_keys_by_pattern(pattern: String) -> Result<(), Status> {
+    let mut redis_conn = get_async_redis_conn()
+        .await
+        .map_err(|e| Status::internal(format!("{:#}", e)))?;
+    let mut cursor = 0_u64;
+
+    loop {
+        let (next_cursor, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+            .arg(cursor)
+            .arg("MATCH")
+            .arg(&pattern)
+            .arg("COUNT")
+            .arg(100_u32)
+            .query_async(&mut redis_conn)
+            .await
+            .map_err(|e| Status::internal(format!("{:#}", e)))?;
+
+        if !keys.is_empty() {
+            let _: usize = redis::cmd("DEL")
+                .arg(keys)
+                .query_async(&mut redis_conn)
+                .await
+                .map_err(|e| Status::internal(format!("{:#}", e)))?;
+        }
+
+        if next_cursor == 0 {
+            break;
+        }
+        cursor = next_cursor;
+    }
+
+    Ok(())
 }
 
 fn optional_uuid(value: &str) -> Result<Option<Uuid>, Status> {

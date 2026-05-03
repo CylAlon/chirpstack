@@ -33,6 +33,22 @@ service AlinkwiseService {
       delete : "/api/alinkwise/gateways/{gateway_id}/frame-log"
     };
   }
+
+  // ClearDeviceFrameLog clears the cached Redis frame log for one device.
+  rpc ClearDeviceFrameLog(ClearDeviceFrameLogRequest)
+      returns (ClearDeviceFrameLogResponse) {
+    option (google.api.http) = {
+      delete : "/api/alinkwise/devices/{dev_eui}/frame-log"
+    };
+  }
+
+  // ClearDeviceMetrics clears the cached Redis metrics for one device.
+  rpc ClearDeviceMetrics(ClearDeviceMetricsRequest)
+      returns (ClearDeviceMetricsResponse) {
+    option (google.api.http) = {
+      delete : "/api/alinkwise/devices/{dev_eui}/metrics"
+    };
+  }
 }
 
 message ClearGatewayFrameLogRequest {
@@ -41,6 +57,20 @@ message ClearGatewayFrameLogRequest {
 }
 
 message ClearGatewayFrameLogResponse {}
+
+message ClearDeviceFrameLogRequest {
+  // Device EUI (EUI64).
+  string dev_eui = 1;
+}
+
+message ClearDeviceFrameLogResponse {}
+
+message ClearDeviceMetricsRequest {
+  // Device EUI (EUI64).
+  string dev_eui = 1;
+}
+
+message ClearDeviceMetricsResponse {}
 
 message ListTenantDevicesRequest {
   // Max number of devices to return in the result-set.
