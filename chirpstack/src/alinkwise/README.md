@@ -41,6 +41,9 @@
   - 把 `alinkwise.proto` 加入前端 grpc-web 生成列表。
 - `chirpstack/src/downlink/multicast.rs`
   - 组播下行 payload 长度校验固定使用 `RP002_1_0_0` 区域参数表，避免 CN470 在 `Latest` 下 DR0 被判定为 0 字节而丢弃组播队列。
+- `chirpstack/configuration/chirpstack.toml`
+  - 本地测试配置中增加 `[gateway]` CA 路径，用于验证 ChirpStack 网关 TLS 客户端证书签发流程。
+  - 本地 MQTT 默认开启账号密码后，`[integration.mqtt]` 配置默认账号 `gateway / 123456`，避免应用集成 MQTT 连接被 Mosquitto 拒绝。
 
 ## 前端接入
 

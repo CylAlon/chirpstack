@@ -130,9 +130,21 @@
   secret = "you-must-replace-this"
 
 
+# Gateway related configuration.
+[gateway]
+
+  # Test CA used by the ChirpStack gateway "Generate certificate" action.
+  # This CA signs per-gateway TLS client certificates for local mTLS testing.
+  ca_cert = "/Users/cyl/data/code/AlinkwiseServer/data/certs/gateway-ca.crt"
+  ca_key = "/Users/cyl/data/code/AlinkwiseServer/data/certs/gateway-ca.key"
+  client_cert_lifetime = "365d"
+
+
 [integration]
   enabled = ["mqtt"]
 
   [integration.mqtt]
     server = "tcp://localhost:1883/"
+    username = "gateway"
+    password = "123456"
     json = true

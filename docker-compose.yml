@@ -41,9 +41,11 @@ services:
   mosquitto:
     volumes:
       - ./.docker-compose/mosquitto/config/:/mosquitto/config/
+      - ../data/certs:/mosquitto/certs:ro
     image: eclipse-mosquitto:2
     ports:
       - "1883:1883"
+      - "8883:8883"
 
   chirpstack-gateway-bridge-cn470-0:
     image: chirpstack/chirpstack-gateway-bridge:4
