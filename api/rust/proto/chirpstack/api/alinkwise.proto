@@ -49,6 +49,22 @@ service AlinkwiseService {
       delete : "/api/alinkwise/devices/{dev_eui}/metrics"
     };
   }
+
+  // ClearDeviceUplinkHistory clears persisted PostgreSQL integration history for one device.
+  rpc ClearDeviceUplinkHistory(ClearDeviceUplinkHistoryRequest)
+      returns (ClearDeviceUplinkHistoryResponse) {
+    option (google.api.http) = {
+      delete : "/api/alinkwise/devices/{dev_eui}/uplink-history"
+    };
+  }
+
+  // ListDeviceUplinkHistory returns persisted uplink events for one device.
+  rpc ListDeviceUplinkHistory(ListDeviceUplinkHistoryRequest)
+      returns (ListDeviceUplinkHistoryResponse) {
+    option (google.api.http) = {
+      get : "/api/alinkwise/devices/{dev_eui}/uplink-history"
+    };
+  }
 }
 
 message ClearGatewayFrameLogRequest {
@@ -71,6 +87,61 @@ message ClearDeviceMetricsRequest {
 }
 
 message ClearDeviceMetricsResponse {}
+
+message ClearDeviceUplinkHistoryRequest {
+  // Device EUI (EUI64).
+  string dev_eui = 1;
+}
+
+message ClearDeviceUplinkHistoryResponse {
+  uint32 deleted_count = 1;
+}
+
+message ListDeviceUplinkHistoryRequest {
+  // Max number of uplink events to return.
+  uint32 limit = 1;
+
+  // Offset in the result-set.
+  uint32 offset = 2;
+
+  // Device EUI (EUI64).
+  string dev_eui = 3;
+
+  // Optional search over DevAddr, FCnt, FPort, payload hex, object JSON, and rx_info JSON.
+  string search = 4;
+
+  // Optional FPort filter. Only used when has_f_port is true.
+  uint32 f_port = 5;
+
+  // Whether f_port should be applied.
+  bool has_f_port = 6;
+
+  // Optional event type filter: up, join, ack, txack, log, status, location, integration.
+  string event_type = 7;
+
+}
+
+message DeviceUplinkHistoryItem {
+  string deduplication_id = 1;
+  string event_type = 2;
+  string time = 3;
+  string dev_addr = 4;
+  uint32 dr = 5;
+  string f_cnt = 6;
+  uint32 f_port = 7;
+  bool confirmed = 8;
+  string data_hex = 9;
+  string object_json = 10;
+  string rx_info_json = 11;
+  string tx_info_json = 12;
+  string tags_json = 13;
+  string summary_json = 14;
+}
+
+message ListDeviceUplinkHistoryResponse {
+  uint32 total_count = 1;
+  repeated DeviceUplinkHistoryItem result = 2;
+}
 
 message ListTenantDevicesRequest {
   // Max number of devices to return in the result-set.

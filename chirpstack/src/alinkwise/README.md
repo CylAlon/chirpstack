@@ -11,6 +11,9 @@
 - 新增 `AlinkwiseService.ClearGatewayFrameLog`，用于清除单个网关 Redis 实时帧缓存 `gw:{gateway_id}:stream:frame`。
 - 新增 `AlinkwiseService.ClearDeviceFrameLog`，用于清除单个终端 Redis 实时帧缓存 `device:{dev_eui}:stream:frame`。
 - 新增 `AlinkwiseService.ClearDeviceMetrics`，用于清除单个终端 Redis 指标缓存 `metrics:{device:{dev_eui}}*`。
+- 新增 `AlinkwiseService.ListDeviceUplinkHistory`，用于从 PostgreSQL integration 的 `event_*` 表按终端查询合并后的历史事件。
+- 新增 `AlinkwiseService.ClearDeviceUplinkHistory`，用于手动清空单个终端 PostgreSQL integration 历史事件。
+- 新增 `[alinkwise.history] retention_days` 全局保留配置，`0` 表示永久保存，默认保留 180 天。
 
 ## 主要文件
 
@@ -20,6 +23,8 @@
   - gRPC 服务实现，负责权限校验、请求参数转换和响应组装。
 - `chirpstack/src/alinkwise/device_query.rs`
   - 终端列表的高效查询 SQL / Diesel 实现。
+- `chirpstack/src/alinkwise/uplink_history.rs`
+  - 终端历史事件查询、手动清空和保留期清理实现，读取 `[integration.postgresql]` 指向的 integration 数据库，并合并 `event_up`、`event_join`、`event_ack`、`event_tx_ack`、`event_log`、`event_status`、`event_location`、`event_integration`。
 - `chirpstack/src/alinkwise/README.md`
   - 当前说明文档。
 
@@ -42,8 +47,11 @@
 - `chirpstack/src/downlink/multicast.rs`
   - 组播下行 payload 长度校验固定使用 `RP002_1_0_0` 区域参数表，避免 CN470 在 `Latest` 下 DR0 被判定为 0 字节而丢弃组播队列。
 - `chirpstack/configuration/chirpstack.toml`
-  - 本地测试配置中增加 `[gateway]` CA 路径，用于验证 ChirpStack 网关 TLS 客户端证书签发流程。
-  - 本地 MQTT 默认开启账号密码后，`[integration.mqtt]` 配置默认账号 `gateway / 123456`，避免应用集成 MQTT 连接被 Mosquitto 拒绝。
+  - 本地测试配置中增加 `[gateway]` CA 相对路径，用于验证 ChirpStack 网关 TLS 客户端证书签发流程。
+  - 本地 MQTT 默认开启账号密码后，`[integration.mqtt]` 配置默认账号 `gateway / 123456`，并使用 `tcp://localhost:1885/` 作为应用 MQTT 集成对外发布端口，避免与网关接入端口混用。
+  - 增加 `[integration.mqtt.client]` CA 相对路径，用于验证应用 MQTT 集成 TLS 客户端证书签发流程。
+  - 启用 `postgresql` integration，并配置 `chirpstack_integration` 数据库，用于持久化 `event_*` 历史事件。
+  - 增加 `[alinkwise.history] retention_days = 180`，用于控制历史事件保留天数。
 
 ## 前端接入
 
@@ -51,6 +59,7 @@
   - 新增 `listTenantDevices()` 封装。
 - `alinkwise-ui/src/components/admin/device-page.tsx`
   - 终端管理页面改为调用 `ListTenantDevices`，支持租户、应用、状态和搜索过滤。
+  - 终端详情页新增“历史数据” Tab，调用 `ListDeviceUplinkHistory` 查看已落库历史事件，支持按事件类型、端口和关键字筛选，并提供二次确认的历史清空操作和 JSON 备份下载。
 - `alinkwise-ui/src/data/admin.ts`
   - 恢复 `/device/mote` 终端管理菜单入口。
 - `alinkwise-ui/src/pages/admin-page.tsx`

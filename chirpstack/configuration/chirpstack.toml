@@ -46,6 +46,14 @@
   connection_recycling_method = "verified"
 
 
+# Alinkwise custom configuration.
+[alinkwise.history]
+
+  # Number of days to keep PostgreSQL integration history.
+  # Set to 0 to keep history forever.
+  retention_days = 180
+
+
 # Redis configuration.
 [redis]
 
@@ -135,16 +143,25 @@
 
   # Test CA used by the ChirpStack gateway "Generate certificate" action.
   # This CA signs per-gateway TLS client certificates for local mTLS testing.
-  ca_cert = "/Users/cyl/data/code/AlinkwiseServer/data/certs/gateway-ca.crt"
-  ca_key = "/Users/cyl/data/code/AlinkwiseServer/data/certs/gateway-ca.key"
+  ca_cert = "../data/certs/gateway-ca.crt"
+  ca_key = "../data/certs/gateway-ca.key"
   client_cert_lifetime = "365d"
 
 
 [integration]
-  enabled = ["mqtt"]
+  enabled = ["mqtt", "postgresql"]
 
   [integration.mqtt]
-    server = "tcp://localhost:1883/"
+    server = "tcp://localhost:1885/"
     username = "gateway"
     password = "123456"
     json = true
+
+    [integration.mqtt.client]
+      ca_cert = "../data/certs/gateway-ca.crt"
+      ca_key = "../data/certs/gateway-ca.key"
+      client_cert_lifetime = "365d"
+
+  [integration.postgresql]
+    dsn = "postgres://chirpstack_integration:chirpstack_integration@localhost/chirpstack_integration?sslmode=disable"
+    max_open_connections = 10

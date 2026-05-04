@@ -7,7 +7,7 @@ use chirpstack_api::{api, tonic};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-use crate::alinkwise::device_query;
+use crate::alinkwise::{device_query, uplink_history};
 use crate::api::auth::validator;
 use crate::api::error::ToStatus;
 use crate::api::helpers::{ToProto, datetime_to_prost_timestamp};
@@ -102,6 +102,29 @@ impl AlinkwiseService for Alinkwise {
         Ok(Response::new(api::ClearDeviceMetricsResponse {}))
     }
 
+    async fn clear_device_uplink_history(
+        &self,
+        request: Request<api::ClearDeviceUplinkHistoryRequest>,
+    ) -> Result<Response<api::ClearDeviceUplinkHistoryResponse>, Status> {
+        let req = request.get_ref();
+        let dev_eui = EUI64::from_str(&req.dev_eui).map_err(|e| e.status())?;
+
+        self.validator
+            .validate(
+                request.extensions(),
+                validator::ValidateDeviceAccess::new(validator::Flag::Delete, dev_eui),
+            )
+            .await?;
+
+        let deleted_count = uplink_history::delete_for_device(&dev_eui.to_string())
+            .await
+            .map_err(|e| Status::internal(format!("{:#}", e)))?;
+
+        Ok(Response::new(api::ClearDeviceUplinkHistoryResponse {
+            deleted_count: deleted_count as u32,
+        }))
+    }
+
     async fn list_tenant_devices(
         &self,
         request: Request<api::ListTenantDevicesRequest>,
@@ -131,7 +154,9 @@ impl AlinkwiseService for Alinkwise {
             tags: req.tags.clone(),
         };
 
-        let count = device_query::get_count(&filters).await.map_err(|e| e.status())?;
+        let count = device_query::get_count(&filters)
+            .await
+            .map_err(|e| e.status())?;
         let items = device_query::list(
             req.limit as i64,
             req.offset as i64,
@@ -150,6 +175,43 @@ impl AlinkwiseService for Alinkwise {
             .insert("x-log-tenant_id", req.tenant_id.parse().unwrap());
 
         Ok(resp)
+    }
+
+    async fn list_device_uplink_history(
+        &self,
+        request: Request<api::ListDeviceUplinkHistoryRequest>,
+    ) -> Result<Response<api::ListDeviceUplinkHistoryResponse>, Status> {
+        let req = request.get_ref();
+        let dev_eui = EUI64::from_str(&req.dev_eui).map_err(|e| e.status())?;
+
+        self.validator
+            .validate(
+                request.extensions(),
+                validator::ValidateDeviceAccess::new(validator::Flag::Read, dev_eui),
+            )
+            .await?;
+
+        let filters = uplink_history::Filters {
+            dev_eui: dev_eui.to_string(),
+            event_type: req.event_type.clone(),
+            search: req.search.clone(),
+            f_port: if req.has_f_port {
+                Some(req.f_port)
+            } else {
+                None
+            },
+        };
+        let count = uplink_history::get_count(&filters)
+            .await
+            .map_err(|e| Status::internal(format!("{:#}", e)))?;
+        let items = uplink_history::list(req.limit as i64, req.offset as i64, &filters)
+            .await
+            .map_err(|e| Status::internal(format!("{:#}", e)))?;
+
+        Ok(Response::new(api::ListDeviceUplinkHistoryResponse {
+            total_count: count as u32,
+            result: items.iter().map(to_device_uplink_history_item).collect(),
+        }))
     }
 }
 
@@ -195,7 +257,30 @@ fn optional_uuid(value: &str) -> Result<Option<Uuid>, Status> {
     Ok(Some(Uuid::from_str(value).map_err(|e| e.status())?))
 }
 
-fn to_tenant_device_list_item(item: &device_query::TenantDeviceListItem) -> api::TenantDeviceListItem {
+fn to_device_uplink_history_item(
+    item: &uplink_history::DeviceUplinkHistoryItem,
+) -> api::DeviceUplinkHistoryItem {
+    api::DeviceUplinkHistoryItem {
+        deduplication_id: item.deduplication_id.clone(),
+        event_type: item.event_type.clone(),
+        time: item.time.clone(),
+        dev_addr: item.dev_addr.clone(),
+        dr: item.dr,
+        f_cnt: item.f_cnt.clone(),
+        f_port: item.f_port,
+        confirmed: item.confirmed,
+        data_hex: item.data_hex.clone(),
+        object_json: item.object_json.clone(),
+        rx_info_json: item.rx_info_json.clone(),
+        tx_info_json: item.tx_info_json.clone(),
+        tags_json: item.tags_json.clone(),
+        summary_json: item.summary_json.clone(),
+    }
+}
+
+fn to_tenant_device_list_item(
+    item: &device_query::TenantDeviceListItem,
+) -> api::TenantDeviceListItem {
     api::TenantDeviceListItem {
         dev_eui: item.dev_eui.to_string(),
         name: item.name.clone(),
@@ -206,10 +291,7 @@ fn to_tenant_device_list_item(item: &device_query::TenantDeviceListItem) -> api:
         device_profile_name: item.device_profile_name.clone(),
         created_at: Some(datetime_to_prost_timestamp(&item.created_at)),
         updated_at: Some(datetime_to_prost_timestamp(&item.updated_at)),
-        last_seen_at: item
-            .last_seen_at
-            .as_ref()
-            .map(datetime_to_prost_timestamp),
+        last_seen_at: item.last_seen_at.as_ref().map(datetime_to_prost_timestamp),
         device_status: match item.margin {
             Some(margin) => Some(api::DeviceStatus {
                 margin,

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use chrono::{DateTime, Duration, Utc};
-use diesel::{dsl, prelude::*};
 #[cfg(any(feature = "postgres", feature = "sqlite"))]
 use diesel::sql_types::Bool;
+use diesel::{dsl, prelude::*};
 use diesel_async::RunQueryDsl;
 use lrwn::EUI64;
 use uuid::Uuid;

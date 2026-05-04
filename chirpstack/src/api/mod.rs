@@ -7,8 +7,8 @@ use std::{
 };
 
 use anyhow::{Context as AnyhowContext, Result};
-use chirpstack_api::api::alinkwise_service_server::AlinkwiseServiceServer;
 use axum::{Router, response::IntoResponse, routing::get};
+use chirpstack_api::api::alinkwise_service_server::AlinkwiseServiceServer;
 use chirpstack_api::api::application_service_server::ApplicationServiceServer;
 use chirpstack_api::api::device_profile_service_server::DeviceProfileServiceServer;
 use chirpstack_api::api::device_service_server::DeviceServiceServer;
@@ -41,9 +41,9 @@ use tower_http::trace::TraceLayer;
 use tracing::{error, info};
 
 use super::config;
+use crate::alinkwise;
 use crate::api::auth::validator;
 use crate::helpers::errors::PrintFullError;
-use crate::alinkwise;
 use crate::monitoring::prometheus;
 use crate::stream;
 

@@ -33,6 +33,7 @@ pub struct Configuration {
     pub keks: Vec<Kek>,
     pub regions: Vec<Region>,
     pub ui: UI,
+    pub alinkwise: Alinkwise,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -69,6 +70,34 @@ impl Default for Postgresql {
             max_open_connections: 10,
             ca_cert: "".into(),
             connection_recycling_method: "verified".into(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(default)]
+pub struct Alinkwise {
+    pub history: AlinkwiseHistory,
+}
+
+impl Default for Alinkwise {
+    fn default() -> Self {
+        Alinkwise {
+            history: Default::default(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(default)]
+pub struct AlinkwiseHistory {
+    pub retention_days: u32,
+}
+
+impl Default for AlinkwiseHistory {
+    fn default() -> Self {
+        AlinkwiseHistory {
+            retention_days: 180,
         }
     }
 }

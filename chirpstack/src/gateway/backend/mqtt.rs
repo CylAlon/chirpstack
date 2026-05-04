@@ -323,7 +323,9 @@ impl GatewayBackend for MqttBackend<'_> {
         let json = gateway_is_json(&gw_conf.gateway_id);
         let v3_json = gateway_is_v3_json(&gw_conf.gateway_id);
         let b = match json {
-            true if v3_json => normalize_v3_gateway_config_json_payload(&serde_json::to_vec(&gw_conf)?)?,
+            true if v3_json => {
+                normalize_v3_gateway_config_json_payload(&serde_json::to_vec(&gw_conf)?)?
+            }
             true => serde_json::to_vec(&gw_conf)?,
             false => gw_conf.encode_to_vec(),
         };
@@ -620,9 +622,7 @@ fn normalize_v3_downlink_json_payload(b: &[u8]) -> Result<Vec<u8>> {
                 }
 
                 let has_lora_modulation_info = tx_info.get("loraModulationInfo").is_some();
-                if has_lora_modulation_info
-                    && let Some(obj) = tx_info.as_object_mut()
-                {
+                if has_lora_modulation_info && let Some(obj) = tx_info.as_object_mut() {
                     obj.insert(
                         "modulation".to_string(),
                         serde_json::Value::String("LORA".to_string()),
@@ -667,9 +667,7 @@ fn normalize_v3_downlink_tx_info(
     rename_field(tx_info, "loraModulationInfo", "loRaModulationInfo");
 
     let has_lora_modulation_info = tx_info.get("loRaModulationInfo").is_some();
-    if has_lora_modulation_info
-        && let Some(obj) = tx_info.as_object_mut()
-    {
+    if has_lora_modulation_info && let Some(obj) = tx_info.as_object_mut() {
         obj.insert(
             "modulation".to_string(),
             serde_json::Value::String("LORA".to_string()),

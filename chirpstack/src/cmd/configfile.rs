@@ -65,6 +65,14 @@ pub fn run() {
   connection_recycling_method = "{{ postgresql.connection_recycling_method }}"
 
 
+# Alinkwise custom configuration.
+[alinkwise.history]
+
+  # Number of days to keep PostgreSQL integration history.
+  # Set to 0 to keep history forever.
+  retention_days={{ alinkwise.history.retention_days }}
+
+
 # SQLite configuration.
 #
 # Note: this option is only available to ChirpStack with SQLite support.
