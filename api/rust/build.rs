@@ -8,6 +8,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let proto_dir = Path::new(&proto_dir);
     let proto_dir = proto_dir.join("proto");
     let cs_dir = proto_dir.join("chirpstack");
+    let mut include_dir_paths = vec![proto_dir.join("chirpstack"), proto_dir.join("google")];
+
+    if Path::new("/usr/include/google/protobuf/timestamp.proto").exists() {
+        include_dir_paths.push(Path::new("/usr/include").to_path_buf());
+    }
+
+    let include_dirs: Vec<&str> = include_dir_paths
+        .iter()
+        .map(|p| p.to_str().unwrap())
+        .collect();
 
     std::fs::create_dir_all(out_dir.join("common")).unwrap();
     std::fs::create_dir_all(out_dir.join("gw")).unwrap();
@@ -30,10 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .extern_path(".google.protobuf", well_known_types_path)
         .compile_protos(
             &[cs_dir.join("common").join("common.proto").to_str().unwrap()],
-            &[
-                proto_dir.join("chirpstack").to_str().unwrap(),
-                proto_dir.join("google").to_str().unwrap(),
-            ],
+            &include_dirs,
         )?;
 
     #[cfg(feature = "json")]
@@ -55,10 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .extern_path(".common", "crate::common")
         .compile_protos(
             &[cs_dir.join("gw").join("gw.proto").to_str().unwrap()],
-            &[
-                proto_dir.join("chirpstack").to_str().unwrap(),
-                proto_dir.join("google").to_str().unwrap(),
-            ],
+            &include_dirs,
         )?;
 
     #[cfg(feature = "json")]
@@ -88,10 +92,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .join("internal.proto")
                 .to_str()
                 .unwrap()],
-            &[
-                proto_dir.join("chirpstack").to_str().unwrap(),
-                proto_dir.join("google").to_str().unwrap(),
-            ],
+            &include_dirs,
         )?;
     }
 
@@ -120,10 +121,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .join("integration.proto")
                 .to_str()
                 .unwrap()],
-            &[
-                proto_dir.join("chirpstack").to_str().unwrap(),
-                proto_dir.join("google").to_str().unwrap(),
-            ],
+            &include_dirs,
         )?;
 
     #[cfg(feature = "json")]
@@ -163,10 +161,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .to_str()
                     .unwrap(),
             ],
-            &[
-                proto_dir.join("chirpstack").to_str().unwrap(),
-                proto_dir.join("google").to_str().unwrap(),
-            ],
+            &include_dirs,
         )?;
 
     #[cfg(feature = "json")]
@@ -213,10 +208,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 cs_dir.join("api").join("fuota.proto").to_str().unwrap(),
                 cs_dir.join("api").join("alinkwise.proto").to_str().unwrap(),
             ],
-            &[
-                proto_dir.join("chirpstack").to_str().unwrap(),
-                proto_dir.join("google").to_str().unwrap(),
-            ],
+            &include_dirs,
         )?;
 
     Ok(())

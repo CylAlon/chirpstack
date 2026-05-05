@@ -5,5 +5,6 @@ api/rust/target
 backend/target
 lrwn/target
 lrwn/filters/target
+target
 **/node_modules
 Dockerfile
